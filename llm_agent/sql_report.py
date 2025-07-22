@@ -10,10 +10,7 @@ from langchain_openai import ChatOpenAI
 from langchain_community.utilities import SQLDatabase
 
 
-# ----------------------------- #
 # 설정
-# ----------------------------- #
-# 현재 파일 기준으로 상위 디렉토리 경로를 계산
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # == /app
 
 # 정확한 DB 경로 설정
@@ -22,9 +19,8 @@ CSV_DIR = os.path.join(BASE_DIR, "data", "csv_data")
 BASE_URL = ""
 MODEL_NAME = "Qwen3-14B"
 
-# ----------------------------- #
+
 # DB 초기화 및 CSV 파일 읽기 (원하는 테이블만)
-# ----------------------------- #
 include_tables = ["전라북도_대학교_면적", "전라북도_대학교_인원현황"]  # 원하는 테이블명
 
 conn = sqlite3.connect(DB_PATH)
@@ -40,9 +36,7 @@ cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
 table_names = [row[0] for row in cursor.fetchall() if row[0] in include_tables]
 
 
-# ----------------------------- #
 # LLM 연결
-# ----------------------------- #
 llm = ChatOpenAI(
     base_url=BASE_URL,
     api_key="not-needed",
@@ -53,9 +47,7 @@ llm = ChatOpenAI(
 db = SQLDatabase.from_uri(f"sqlite:///{DB_PATH}")
 
 
-# ----------------------------- #
 # 테이블 스키마 정보 생성
-# ----------------------------- #
 def generate_table_info_with_full_values(conn, table_name):
     cursor = conn.cursor()
     cursor.execute(f"PRAGMA table_info('{table_name}')")
@@ -88,9 +80,7 @@ final_table_info = "\n\n\n".join(
     generate_table_info_with_full_values(conn, table) for table in table_names
 )
 
-# ----------------------------- #
-# SQL 프롬프트 및 체인
-# ----------------------------- #
+# SQL 프롬프트
 sql_prompt = ChatPromptTemplate.from_messages([
     ("system", 
      """You are an expert SQL query generator.
@@ -180,106 +170,8 @@ Output ONLY the final executable SQL query or queries. Any deviation from these 
 
 sql_chain = sql_prompt | llm
 
-# ----------------------------- #
-# 분석 보고서 체인 (생략된 부분 포함 가능)
-# ----------------------------- #
-# response_prompt = ChatPromptTemplate.from_template("""
-# You are a professional analyst responsible for writing formal reports based on statistical data. Below is a user question and the result of an SQL query presented in CSV format.
 
-# [User Question]
-# {question}
-
-# [SQL Result Table (CSV Format)]
-# {table}
-
-# Write a **formal, structured, and richly detailed data analysis report in Korean** following the instructions below.
-
-# ---
-
-# **Report Structure**:
-
-# 1. Title: Bold and clear at the top.
-
-# 2. Introduction: 
-#    - Provide a detailed explanation of the purpose of the analysis, the context behind the user's question, and the relevance of the data used.
-#    - Describe the scope of the analysis, including the time period, regions, and populations involved.
-#    - Offer a brief outline of the structure of the report and what insights the reader can expect from each section.
-#    - The introduction MUST be written in **at least two well-developed paragraphs**, using formal and analytical language.
-   
-# 3. Body:
-#    - Use numbered section headings.
-#    - In each section:
-#      - Write a natural flowing paragraph explaining numerical changes.
-#      - Insert **only one markdown table** per section. Do not use charts or visualizations.
-#      - The table must follow the exact syntax and layout described below.
-#      - When constructing the table:
-#        - Prefer a **vertical layout** (few columns, more rows) rather than a wide horizontal format.
-#        - **Exclude any columns or rows that are unnecessary** for understanding the key points.
-#      - After the table:
-#        - Leave **two blank lines**
-#        - On a new line, insert the table title using **this exact format**:
-         
-#          ![짧고 간결한 표 제목]
-
-#        - Then write a paragraph interpreting the table’s significance (e.g., 증감, 추세, 비교, 시사점).
-#    - Use tables consistently throughout the report to support your analysis.
-
-# 4. Conclusion: Summarize all key findings and suggest societal or policy implications.
-#    - Absolutely no extra notes or reminders after the Conclusion.
-
-# ---
-
-# **Table Insertion Rules**:
-
-# You MUST follow the EXACT syntax and layout below when inserting a table.
-
-# 1. Tables must be written using **valid markdown table syntax**:
-
-#    | 연도 | 서울시 | 부산시 |
-#    |------|--------|--------|
-#    | 2020 | 2,345  | 1,234  |
-#    | 2021 | 5,678  | 3,456  |
-
-# 2. After the table:
-#    - Insert **two blank lines**
-#    - Then insert the table title on its own line using this exact format:
-     
-#      ![짧고 간결한 표 제목]
-
-# 3. Strict rules for the table title:
-#    - DO NOT write titles like `**표 1: 서울시 인구**`, `표 1:`, or any bold/numbered form.
-#    - DO NOT use `[[...]]`.
-#    - Use ONLY the `![표 제목]` syntax — no numbering, no formatting, no alternatives.
-
-# 4. Then write a paragraph explaining what the table shows (e.g., trends, causes, changes).
-
-# 5. Only one table per section. Do not include any charts, graphs, or visual elements.
-
-# ---
-
-# **Writing Style**:
-
-# - Use formal, academic, and professional Korean.
-# - Write in complete paragraphs. Do not use bullet points or lists.
-# - Do **not** list values or attributes using commas (예: “2020년, 2021년, 2022년” → 사용 금지).
-# - Each paragraph should flow logically, developing key points with precision.
-# - Each individual sentence must be concise and contain a single core idea.
-# - Explain numerical changes precisely, including 증가율, 감소율, 증감량 등.
-# - Discuss observed trends, underlying causes, and their implications clearly.
-
-# ---
-
-# **Markdown Syntax Reminder**:
-
-# - Always put spaces around tilde (~) in numeric ranges.
-#   - Correct: 2020 ~ 2022, 12세 ~ 21세
-#   - Incorrect: 2020~2022, 12세~21세
-
-# ---
-
-# Start writing the report now, strictly following all these instructions.
-# """)
-
+# 분석 보고서
 response_prompt = ChatPromptTemplate.from_template("""
 You are a professional analyst responsible for writing formal reports based on statistical data. Below is a user question and the result of an SQL query presented in CSV format.
 
@@ -392,11 +284,10 @@ You MUST follow the EXACT syntax and layout below when inserting a table.
 Start writing the report now, strictly following all these instructions.
 """)
 
+
 response_chain = response_prompt | llm
 
-# ----------------------------- #
 # 유틸 함수
-# ----------------------------- #
 def contains_chinese(text):
     return bool(re.search(r'[\u4e00-\u9fff]', text))
 
@@ -493,7 +384,7 @@ def run_sql_analysis(user_query):
             df_result = []
 
             for i, sql_raw in enumerate(sql_queries):
-                print(f"🎯 Trying SQL Query {i + 1}...")
+                print(f"Trying SQL Query {i + 1}...")
                 sql_corrected = correct_sql_table_names(sql_raw)
                 print(sql_corrected)
                 df = pd.read_sql(sql_corrected, db._engine)
@@ -509,9 +400,9 @@ def run_sql_analysis(user_query):
             sql_success = True
 
         except Exception as e:
-            print(f"⚠️ 에러 발생: {e}")
+            print(f"에러 발생: {e}")
             sql_retry += 1
-            print(f"🔁 재시도 {sql_retry}/{sql_max_retry}")
+            print(f"재시도 {sql_retry}/{sql_max_retry}")
 
     if not sql_success:
         raise RuntimeError("SQL 쿼리 생성 및 실행에 실패했습니다.")
@@ -530,9 +421,9 @@ def run_sql_analysis(user_query):
             response_print = normalize_tilde_spacing(response.content)
             print(response_print)
         except Exception as e:
-            print(f"⚠️ 자연어 응답 생성 오류: {e}")
+            print(f"자연어 응답 생성 오류: {e}")
             response_retry += 1
-            print(f"🔁 자연어 응답 재시도 {response_retry}/{response_max_retry}")
+            print(f"자연어 응답 재시도 {response_retry}/{response_max_retry}")
 
     if not response_success:
         raise RuntimeError("자연어 응답 생성에 실패했습니다.")
