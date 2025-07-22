@@ -65,7 +65,8 @@ def search_faiss_with_partial_and_similarity(query_word, model, index, meta, fil
             }
 
     results = list(partial_hits.values()) + list(candidate_files.values())
-    return sorted(results, key=lambda x: x["score"], reverse=True)
+    sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
+    return [os.path.splitext(item["file"])[0] for item in sorted_results]
 
 # 모델, 인덱스, 메타, 토큰 인덱스 로딩 함수 추가
 def load_components():
