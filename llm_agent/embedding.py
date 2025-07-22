@@ -21,7 +21,7 @@ def normalize_token(text):
     text = re.sub(r"\s+", "", text)
     return text.strip()
 
-# 텍스트 임베딩 함수 (KURE)
+# 텍스트 임베딩 함수
 @torch.no_grad()
 def encode_texts(texts, tokenizer, model, device, batch_size=32):
     vecs = []
@@ -39,7 +39,7 @@ def embed_csv_files(csv_dir, tokenizer, model, device):
     file_token_index = {}
 
     csv_files = glob.glob(os.path.join(csv_dir, "*.csv"))
-    print("✅ 발견된 CSV 파일 수:", len(csv_files))
+    print("발견된 CSV 파일 수:", len(csv_files))
     for csv_path in csv_files:
         table_name = os.path.basename(csv_path).replace(".csv", "")
         df = pd.read_csv(csv_path)
