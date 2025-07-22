@@ -24,8 +24,8 @@ def normalize_token(text):
 def search_faiss_with_partial_and_similarity(query_word, model, index, meta, file_token_index, thres1=0.4, thres2=0.5):
     query_norm = normalize_token(query_word)
     query_vec = model.encode(query_norm, convert_to_numpy=True, normalize_embeddings=True).astype(np.float32)
-    print("🔍 query_vec.shape:", np.array([query_vec]).shape)
-    print("🔍 index.d (expected):", index.d)
+    print("query_vec.shape:", np.array([query_vec]).shape)
+    print("index.d (expected):", index.d)
     candidate_files = {}
     partial_hits = {}
 
