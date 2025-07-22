@@ -9,9 +9,11 @@ from io import StringIO
 import os
 import re
 
+# 한글 글꼴 설정
 plt.rcParams["font.family"] = 'NanumGothic'
 plt.rcParams['axes.unicode_minus'] = False
 
+# LLM 연결
 llm = ChatOpenAI(
     base_url="",
     api_key="not-needed",
@@ -19,6 +21,7 @@ llm = ChatOpenAI(
     max_tokens=5000,
 )
 
+# 그래프 프롬프트
 design_prompt = """
 Follow all instructions below **strictly**, and always assume that the original data and all column names are in **Korean**.
 **Do not translate, alter, or abbreviate any Korean column names**. Use them **as-is** in the code.
@@ -387,6 +390,8 @@ However, for all visualization labels (titles, axes, legends), replace underscor
 The answer is NOT complete unless it includes the entire visualization code block.**
 """
 
+
+# 코드 추출출
 def extract_clean_code(llm_output: str, df_assign_code: str = "df = df_table[i]") -> str:
     parts = llm_output.split("```")
 
@@ -416,7 +421,7 @@ def extract_clean_code(llm_output: str, df_assign_code: str = "df = df_table[i]"
             return "\n".join(final_lines)
 
     # fallback 제거 → 응답 재시도 유도
-    raise ValueError("⚠️ 코드 블록을 찾을 수 없습니다. 응답 재생성이 필요합니다.")
+    raise ValueError("코드 블록을 찾을 수 없습니다. 응답 재생성이 필요합니다.")
 
 
 def ensure_save_and_show(code_str: str, name: str = None, directory: str = "./data"):
@@ -441,6 +446,7 @@ def ensure_save_and_show(code_str: str, name: str = None, directory: str = "./da
     return code_str.strip(), full_path
 
 
+# 그래프 저장
 def run_graph_generation(df_table, table_name):
     print(f"[graph.py] start, {df_table}, {table_name}")
     MAX_RETRIES = 3
@@ -467,7 +473,7 @@ def run_graph_generation(df_table, table_name):
                 code = extract_clean_code(query_response["output"], df_assign_code="df = df_table[i]").strip()
 
                 if not code or "import" not in code:
-                    raise ValueError("⚠️ 코드 블록이 출력에 포함되지 않았습니다.")
+                    raise ValueError("코드 블록이 출력에 포함되지 않았습니다.")
 
                 # 저장 및 show 조치 포함한 코드 생성
                 final_code, path = ensure_save_and_show(code, table_name[i], directory=os.path.abspath("./graph"))
@@ -480,6 +486,6 @@ def run_graph_generation(df_table, table_name):
 
             except Exception as e:
                 attempt += 1
-                print(f"⚠️ [표 {i+1}] 시도 {attempt} 실패: {e}")
+                print(f"[표 {i+1}] 시도 {attempt} 실패: {e}")
                 if attempt >= MAX_RETRIES:
-                    print(f"❌ [표 {i+1}] 그래프 생성 실패: {query}")
+                    print(f"[표 {i+1}] 그래프 생성 실패: {query}")
